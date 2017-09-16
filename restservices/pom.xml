@@ -17,17 +17,27 @@
   <build>
     <plugins>
       <plugin>
-        <artifactId>maven-jar-plugin</artifactId>
-        <version>3.0.2</version>
+      <artifactId>maven-assembly-plugin</artifactId>
         <configuration>
+          <finalName>rpi2crestservices</finalName>
+          <appendAssemblyId>false</appendAssemblyId> 
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
           <archive>
             <manifest>
-              <addClasspath>true</addClasspath>
-              <classpathPrefix>lib/</classpathPrefix>
               <mainClass>info.boehle.rpi2c.restservices.App</mainClass>
             </manifest>
           </archive>
         </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>attached</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
@@ -40,29 +50,39 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-    	<groupId>org.eclipse.jetty</groupId>
-    	<artifactId>jetty-server</artifactId>
-    	<version>9.4.6.v20170531</version>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-server</artifactId>
+      <version>9.4.6.v20170531</version>
     </dependency>
     <dependency>
-    	<groupId>org.eclipse.jetty</groupId>
-    	<artifactId>jetty-servlet</artifactId>
-    	<version>9.4.6.v20170531</version>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-servlet</artifactId>
+      <version>9.4.6.v20170531</version>
     </dependency>
     <dependency>
-    	<groupId>org.glassfish.jersey.core</groupId>
-    	<artifactId>jersey-server</artifactId>
-    	<version>2.9.1</version>
+      <groupId>org.glassfish.jersey.core</groupId>
+      <artifactId>jersey-server</artifactId>
+      <version>2.9.1</version>
     </dependency>
     <dependency>
-    	<groupId>org.glassfish.jersey.containers</groupId>
-    	<artifactId>jersey-container-servlet-core</artifactId>
-    	<version>2.9.1</version>
+      <groupId>org.glassfish.jersey.containers</groupId>
+      <artifactId>jersey-container-servlet-core</artifactId>
+      <version>2.9.1</version>
     </dependency>
     <dependency>
-    	<groupId>org.glassfish.jersey.containers</groupId>
-    	<artifactId>jersey-container-jetty-http</artifactId>
-    	<version>2.9.1</version>
+      <groupId>org.glassfish.jersey.containers</groupId>
+      <artifactId>jersey-container-jetty-http</artifactId>
+      <version>2.9.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jdom</groupId>
+      <artifactId>jdom2</artifactId>
+      <version>2.0.6</version>
+    </dependency>
+    <dependency>
+      <groupId>com.pi4j</groupId>
+      <artifactId>pi4j-core</artifactId>
+      <version>1.1</version>
     </dependency>
   </dependencies>
 </project>
