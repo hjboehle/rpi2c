@@ -6,7 +6,7 @@ package info.boehle.rpi2c.restservices;
  * constructed, it is not ensured whether the value is valid for its definition.
  * 
  * @author Hans Jürgen Böhle
- * @version 1.0.0
+ * @version 1.0.1
  *
  */
 
@@ -57,6 +57,9 @@ public class UncheckedValue {
 			break;
 		case 8: // value is an octal number
 			regexValue = "[0-7]+";
+			break;
+		case 10: // value is an decimal number
+			regexValue = "[0-9]+";
 			break;
 		case 16: // value is a hexadecimal number
 			regexValue = "[0-9A-Fa-f]+";
