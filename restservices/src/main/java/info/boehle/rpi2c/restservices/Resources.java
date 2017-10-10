@@ -19,18 +19,22 @@ import com.pi4j.system.SystemInfo;
 public class Resources {
 	String xmlMessage = "";
 	String information = "";
-	String success = "yes";
+	String returnmessage = RETURNMESSAGE_00;
 	String returncode = "0";
 	String addressLowerLimit = "03";
 	String addressUpperLimit = "77";
-	static final String RETURNCODE_01 = "01 - unsupported operation";
-	static final String RETURNCODE_02 = "02 - input/output error";
-	static final String RETURNCODE_03 = "03 - thread interrupted";
-	static final String RETURNCODE_04 = "04 - the address-parameter is missing in the URL";
-	static final String RETURNCODE_05 = "05 - the address-parameter does not contains a regular and valid value";
-	static final String RETURNCODE_06 = "06 - the register-parameter does not contains a regular and valid value";
-	static final String RETURNCODE_07 = "07 - the size-parameter does not contains a regular and valid value";
-	static final String RETURNCODE_08 = "08 - unsupported I2C-Bus, I2C bus 1 is supported";
+	static final String RETURNCODE_00 = "0";
+	static final String RETURNCODE_01 = "1";
+	static final String RETURNCODE_02 = "2";
+	static final String RETURNCODE_03 = "3";
+	static final String RETURNCODE_04 = "4";
+	static final String RETURNCODE_05 = "5";
+	static final String RETURNMESSAGE_00 = "0 - successful operation";
+	static final String RETURNMESSAGE_01 = "1 - unsupported operation";
+	static final String RETURNMESSAGE_02 = "2 - input/output error";
+	static final String RETURNMESSAGE_03 = "3 - thread interrupted";
+	static final String RETURNMESSAGE_04 = "4 - errors in the parameters of the URL, ";
+	static final String RETURNMESSAGE_05 = "5 - combination of parameters not allowed";
     public static I2CBus i2cBus;
     public static I2CDevice i2cDevice;
 
@@ -38,8 +42,8 @@ public class Resources {
 	@Path("hello")
 	@Produces(MediaType.TEXT_PLAIN)
 	public String helloWorld() {
-		information = "Hello World!";
-		XmlResponse xmlResponse = new XmlResponse(information, success, returncode);
+		this.information = "Hello World!";
+		XmlResponse xmlResponse = new XmlResponse(information, returnmessage, returncode);
 		xmlMessage = xmlResponse.getXmlMessage();
 		return xmlMessage;
 	}
@@ -48,8 +52,8 @@ public class Resources {
 	@Path("system/os")
 	@Produces(MediaType.TEXT_PLAIN)
 	public String getSystemInfoOs() {
-		String information = System.getProperty("os.name");
-		XmlResponse xmlResponse = new XmlResponse(information, success, returncode);
+		this.information = System.getProperty("os.name");
+		XmlResponse xmlResponse = new XmlResponse(information, returnmessage, returncode);
 		xmlMessage = xmlResponse.getXmlMessage();
 		return xmlMessage;
 	}
@@ -60,22 +64,22 @@ public class Resources {
 	public String getSystemInfoModel() {
 		try {
 			this.information = SystemInfo.getModelName();
-			this.success = "yes";
-			this.returncode = "0";
+			this.returnmessage = RETURNMESSAGE_00;
+			this.returncode = RETURNCODE_00;
 		} catch (UnsupportedOperationException e) {
-			this.success = "no";
+			this.returnmessage = RETURNMESSAGE_01;
 			this.returncode = RETURNCODE_01;
 			e.printStackTrace();
 		} catch (IOException e) {
-			this.success = "no";
+			this.returnmessage = RETURNMESSAGE_02;
 			this.returncode = RETURNCODE_02;
 			e.printStackTrace();
 		} catch (InterruptedException e) {
-			this.success = "no";
+			this.returnmessage = RETURNMESSAGE_03;
 			this.returncode = RETURNCODE_03;
 			e.printStackTrace();
 		}
-		XmlResponse xmlResponse = new XmlResponse(information, success, returncode);
+		XmlResponse xmlResponse = new XmlResponse(information, returnmessage, returncode);
 		xmlMessage = xmlResponse.getXmlMessage();
 		return xmlMessage;
 	}
@@ -86,22 +90,22 @@ public class Resources {
 	public String getSystemHardware() {
 		try {
 			this.information = SystemInfo.getHardware();
-			this.success = "yes";
-			this.returncode = "0";
+			this.returnmessage = RETURNMESSAGE_00;
+			this.returncode = RETURNCODE_00;
 		} catch (UnsupportedOperationException e) {
-			this.success = "no";
+			this.returnmessage = RETURNMESSAGE_01;
 			this.returncode = RETURNCODE_01;
 			e.printStackTrace();
 		} catch (IOException e) {
-			this.success = "no";
+			this.returnmessage = RETURNMESSAGE_02;
 			this.returncode = RETURNCODE_02;
 			e.printStackTrace();
 		} catch (InterruptedException e) {
-			this.success = "no";
+			this.returnmessage = RETURNMESSAGE_03;
 			this.returncode = RETURNCODE_03;
 			e.printStackTrace();
 		}
-		XmlResponse xmlResponse = new XmlResponse(information, success, returncode);
+		XmlResponse xmlResponse = new XmlResponse(information, returnmessage, returncode);
 		xmlMessage = xmlResponse.getXmlMessage();
 		return xmlMessage;
 	}
@@ -110,54 +114,40 @@ public class Resources {
 	@GET
 	@Produces(MediaType.TEXT_PLAIN)
 	public String read(@DefaultValue("") @QueryParam("address") String address,
+			@DefaultValue("1") @QueryParam("i2cbus") String i2cbus,
 			@DefaultValue("") @QueryParam("register") String register,
-			@DefaultValue("1") @QueryParam("size") String size) {
+			@DefaultValue("") @QueryParam("buffer") String buffer,
+			@DefaultValue("") @QueryParam("offset") String offset,
+			@DefaultValue("") @QueryParam("size") String size) {
 		// check whether the mandatory parameter "address" exists in the URL
-		this.success = "no";
-		if (!address.equals("no")) {
-			// address exists, check whether the mandatory parameter "address"
-			UncheckedValue uncheckedValueAddress = new UncheckedValue(address, 16, this.addressLowerLimit,
-					this.addressUpperLimit);
-			if (uncheckedValueAddress.getValidity()) {
-				// address is valid, check whether the optional parameter "register" 
-				UncheckedValue uncheckedValueRegister = new UncheckedValue(register, 16, this.addressLowerLimit,
-						this.addressUpperLimit);
-				if (uncheckedValueRegister.getValidity() || register.equals("")) {
-					// address and register are valid, check whether the optional parameter "size"
-					UncheckedValue uncheckedValueSize = new UncheckedValue(size, 10, "1", "10");
-					if (uncheckedValueSize.getValidity() || size.equals("")) {
-						try {
-							i2cBus = I2CFactory.getInstance(I2CBus.BUS_1);
-							i2cDevice = i2cBus.getDevice(Integer.parseInt(address, 16));
-							int returnValue = i2cDevice.read();
-							this.information = "addressHex: " +  Integer.parseInt(address, 16) + ", byte value: " + returnValue;
-							this.success = "yes";
-							this.returncode = "0";
-						} catch (UnsupportedBusNumberException e) {
-							this.returncode = RETURNCODE_08;
-						} catch (IOException e) {
-							this.returncode = RETURNCODE_02;
-						}
-						// reads a byte value of a I2C device
-						
-						// reads a byte value from the register of a I2C device 
-						
-						//this.information = "address: " + address + ", register: " + register + ", size: " + size;
-						this.success = "yes";
-						this.returncode = "0";
-					} else {
-						this.returncode = RETURNCODE_07;
-					}
-				} else {
-					this.returncode = RETURNCODE_06;
-				}
+		ParamChecker paramChecker = new ParamChecker(address, i2cbus, register, buffer, offset, size);
+		String resultParamChecker = paramChecker.getResultsOnValidity();
+		if (resultParamChecker.equals("valid")) {
+			// all parameters of the URL are valid and now find out the read case
+			String resultReadCase = paramChecker.getReadCase();
+			if (resultReadCase.equals("1bvd")) {
+				// read case: read one bit value from an i2c-device
+				this.information = "read one bit value from an i2c-device";
+			} else if (resultReadCase.equals("nbvd")) {
+				// read case: read n bit values from an i2c-device
+				this.information = "read n bit values from an i2c-device";
+			} else if (resultReadCase.equals("1bvr")) {
+				// read case: read one bit value from a register
+				this.information = "read one bit value from a register";
+			} else if (resultReadCase.equals("nbvr")) {
+				// read case: read n bit values from a register
+				this.information = "read n bit values from a register";
 			} else {
+				// no read case identified
+				this.returnmessage = RETURNMESSAGE_05;
 				this.returncode = RETURNCODE_05;
 			}
 		} else {
+			// errors in the parameters of the URL
+			this.returnmessage = RETURNMESSAGE_04 + resultParamChecker;
 			this.returncode = RETURNCODE_04;
 		}
-		XmlResponse xmlResponse = new XmlResponse(information, success, returncode);
+		XmlResponse xmlResponse = new XmlResponse(information, returnmessage, returncode);
 		this.xmlMessage = xmlResponse.getXmlMessage();
 		return this.xmlMessage;
 	}

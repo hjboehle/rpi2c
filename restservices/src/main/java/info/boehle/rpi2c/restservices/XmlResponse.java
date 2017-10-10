@@ -8,13 +8,13 @@ import org.jdom2.output.XMLOutputter;
 public class XmlResponse {
 	String xmlMessage;
 	String information;
-	String success;
+	String returnmessage;
 	String returncode;
 
-	public XmlResponse(String i, String s, String r) {
+	public XmlResponse(String i, String rm, String rc) {
 		this.information = i;
-		this.success = s;
-		this.returncode = r;
+		this.returnmessage = rm;
+		this.returncode = rc;
 
 	}
 
@@ -26,7 +26,7 @@ public class XmlResponse {
 
 		Element message = new Element("message");
 		message.addContent(new Element("information").setText(this.information));
-		message.addContent(new Element("success").setText(this.success));
+		message.addContent(new Element("returnmessage").setText(this.returnmessage));
 		message.addContent(new Element("returncode").setText(this.returncode));
 		
 		xmlDocument.getRootElement().addContent(message);
