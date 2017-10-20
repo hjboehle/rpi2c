@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <port>2222</port>
+  <preferredI2cBus>1</preferredI2cBus>
+  <preferredDelay>300</preferredDelay>
+</configuration>
