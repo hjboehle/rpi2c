@@ -2,12 +2,15 @@ package info.boehle.rpi2c.restservices;
 
 import java.io.IOException;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.SecurityContext;
 
 import com.pi4j.system.SystemInfo;
 
@@ -35,12 +38,16 @@ public class Resources {
 	static final String RETURNMESSAGE_05 = "5 - combination of parameters not allowed";
 	static final String RETURNMESSAGE_06 = "6 - unsupported I2C-Bus, I2C bus 1 is supported";
 	static final String RETURNMESSAGE_99 = "99 - unknown error";
+	//HttpServletRequest request;
 
 	@GET
 	@Path("hello")
 	@Produces(MediaType.TEXT_PLAIN)
-	public String helloWorld() {
-		this.information = "Hello World!";
+	public String helloWorld(@Context HttpServletRequest requestContext,@Context SecurityContext context) {
+		String clientHostname = requestContext.getRemoteHost();
+		String clientAddress = requestContext.getRemoteAddr();
+		//this.information = "Hello World";
+		this.information = "Host: " + clientHostname + ", ip-address: " + clientAddress;
 		XmlResponse xmlResponse = new XmlResponse(information, returnmessage, returncode);
 		xmlMessage = xmlResponse.getXmlMessage();
 		return xmlMessage;

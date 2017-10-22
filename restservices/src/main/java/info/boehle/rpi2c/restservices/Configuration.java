@@ -1,41 +1,38 @@
 package info.boehle.rpi2c.restservices;
 
-import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-
-import org.jdom2.Document;
-import org.jdom2.Element;
-import org.jdom2.JDOMException;
-import org.jdom2.input.SAXBuilder;
-import org.jdom2.input.sax.XMLReaders;
-import org.jdom2.output.Format;
-import org.jdom2.output.XMLOutputter;
+import java.io.Reader;
+import java.io.Writer;
+import java.util.Properties;
 
 /**
  * The class models a configuration for Raspberry Pi I2C-RESTful services
  * 
  * @author Hans Jürgen Böhle
  * @version 1.0.0
- * 
- * @param port,
- *            port for the RESTful services on Web-Server (httpd)
- * @param preferredI2cBus,
- *            I2C Bus which is accepted, if this is not specified in the URL
- * @param delay,
- *            time in milliseconds, which should expire before a service is
- *            resumed
  */
 public class Configuration {
-	int port;
-	int preferredI2cBus;
-	int preferredDelay;
 	static final int NUMBER_OF_CONFIGURATION_VALUES = 3;
-	static final String XML_FILE_NAME = "/configuration.xml";
+	static final String XML_FILE_NAME = "configuration.xml";
 	static final String DEFAULT_PORT = "8181";
 	static final String DEFAULT_PREFERRED_I2CBUS = "1";
 	static final String DEFAULT_PREFERRED_DELAY = "300";
+	static final String PORT_MIN = "0";
+	static final String PORT_MAX = "65535";
+	static final String PREFERRED_I2CBUS_MIN = "0";
+	static final String PREFERRED_I2CBUS_MAX = "1";
+	static final String PREFERRED_DELAY_MIN = "0";
+	static final String PREFERRED_DELAY_MAX = "10000"; // 10.000 milliseconds
+	static final String PROPERTIES_FILENAME = "conf.properties";
+	String port;
+	String preferredI2cBus;
+	String preferredDelay;
+	Properties properties = null;
+	Writer propertiesFileWriter = null;
+	Reader propertiesFileReader = null;
 
 	/**
 	 * Constructor of Class objects
@@ -45,163 +42,134 @@ public class Configuration {
 	}
 
 	/**
-	 * The checkConfigurationFile method verifies whether a configuration file
-	 * exists that meets the requirements. If the requirements are not met, the file
-	 * is corrected or re-created.
+	 * The setDefaultProperties method sets the properties to the default values.
 	 * 
-	 * @return true if there is a correct file. false, if a correct file could not
-	 *         be created.
+	 * @param p,
+	 *            properties object
+	 * @return default properties
 	 */
-
-	public boolean checkConfigurationFile() {
-		boolean correctConfigurationFile = true;
-		boolean writeSuccess;
-		File configurationFile = new File(XML_FILE_NAME);
-		if (configurationFile.exists()) {
-			// file exists, validation of the file
-			Configuration configuration = new Configuration();
-			boolean validSuccess = configuration.validConfigurationFile(configurationFile);
-			if (!validSuccess) {
-				writeSuccess = configuration.writeConfigurationFile(configurationFile);
-				if (!writeSuccess) {
-					correctConfigurationFile = false;
-				}
-			}
-			return correctConfigurationFile;
-		} else {
-			// file not exists, create a configuration file
-			Configuration configuration = new Configuration();
-			writeSuccess = configuration.writeConfigurationFile(configurationFile);
-			if (!writeSuccess) {
-				correctConfigurationFile = false;
-			}
-		}
-		return correctConfigurationFile;
+	public Properties setDefaultProperties(Properties p) {
+		this.properties = new Properties();
+		this.properties.setProperty("port", DEFAULT_PORT);
+		this.properties.setProperty("preferredI2cBus", DEFAULT_PREFERRED_I2CBUS);
+		this.properties.setProperty("preferredDelay", DEFAULT_PREFERRED_DELAY);
+		return this.properties;
 	}
 
 	/**
-	 * The validConfigurationFile method verifies the well-formedness and validity of the configuration file
+	 * The createNewPropertiesFile method creates a new conf.properties file.
 	 * 
-	 * @return true if the file was validate successfully, false if the file was not
-	 *         validate successfully
+	 * @return true by success, false by no success
 	 */
-	public boolean validConfigurationFile(File configurationFile) {
-		boolean validSuccess = true;
-		SAXBuilder saxBuilder = new SAXBuilder(XMLReaders.DTDVALIDATING);
-		try {
-			Document xmlDocument = saxBuilder.build(configurationFile);
-		} catch (JDOMException e) {
-			validSuccess = false;
-		} catch (IOException e) {
-			validSuccess = false;
-			e.printStackTrace();
-		}
-		return validSuccess;
-
-	}
-
-	/**
-	 * The writeConfigurationFile method creates a new configuration file with the
-	 * default configuration values
-	 * 
-	 * @return true if the file was created successfully, false if the file was not
-	 *         created successfully
-	 */
-	public boolean writeConfigurationFile(File configurationFile) {
-		boolean writeSuccess = true;
-		Element configuration = new Element("configuration");
-		Document xmlDocument = new Document();
-		xmlDocument.setRootElement(configuration);
-		configuration.addContent(new Element("port").setText(DEFAULT_PORT));
-		configuration.addContent(new Element("preferredI2cBus").setText(DEFAULT_PREFERRED_I2CBUS));
-		configuration.addContent(new Element("preferredDelay").setText(DEFAULT_PREFERRED_DELAY));
-
-		try {
-			FileOutputStream fileOutputStream = new FileOutputStream(configurationFile);
-			XMLOutputter xmlOutputter = new XMLOutputter();
-			xmlOutputter.setFormat(Format.getPrettyFormat());
-			try {
-				System.out.println("bin in xmlOutputter");
-				xmlOutputter.output(xmlDocument, fileOutputStream);
-			} catch (IOException e) {
-				writeSuccess = false;
-				return writeSuccess;
-			}
-
-		} catch (FileNotFoundException e) {
-			writeSuccess = false;
-			return writeSuccess;
-		}
-
-		return writeSuccess;
-	}
-
-	/**
-	 * The readConfiguration method returns all values from the configuration
-	 * xml-file.
-	 * 
-	 * @return the array of all values from the configuration xml-file
-	 */
-	public String[] readConfiguration() {
-
-		String[] valuesConfiguration = new String[NUMBER_OF_CONFIGURATION_VALUES];
-		Document xmlConfiguration = null;
-		SAXBuilder builder = new SAXBuilder();
-		try {
-			xmlConfiguration = builder.build(XML_FILE_NAME);
-			Element root = xmlConfiguration.getRootElement();
-			Element elementPort = root.getChild("port");
-			Element elementPreferredI2cBus = root.getChild("preferredI2cBus");
-			Element elementPreferredDelay = root.getChild("preferredDelay");
-			valuesConfiguration[0] = elementPort.getText();
-			valuesConfiguration[1] = elementPreferredI2cBus.getText();
-			valuesConfiguration[2] = elementPreferredDelay.getText();
-		} catch (JDOMException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return valuesConfiguration;
-	}
-
-	/**
-	 * The getPort method returns the port number that is stored in the
-	 * configuration XML file.
-	 * 
-	 * @return the port from the configuration xml-file
-	 */
-	public int getPort() {
+	public boolean createNewPropertiesFile(String propertiesComment, boolean defaultValues) {
+		boolean successWrite = true;
 		Configuration configuration = new Configuration();
-		String[] configurationValues = configuration.readConfiguration();
-		this.port = Integer.parseInt(configurationValues[0]);
+		if (defaultValues) {
+			this.properties = configuration.setDefaultProperties(properties);
+		}
+		try {
+			FileOutputStream propertiesFileOutputStream = new FileOutputStream(PROPERTIES_FILENAME);
+			try {
+				properties.store(propertiesFileOutputStream, propertiesComment);
+			} catch (IOException e) {
+				// properties can not write to the conf.properties file
+				successWrite = false;
+			}
+		} catch (FileNotFoundException e) {
+			// conf.properties can not create
+			successWrite = false;
+		}
+		return successWrite;
+	}
+
+	/**
+	 * The readProperties method reads the properties from the conf.properties file.
+	 * 
+	 * @return properties by success, default properties by no success
+	 */
+	public Properties readProperties() {
+		properties = new Properties();
+		String propertiesComment = "file with default properties create automatically";                   
+		FileInputStream propertiesFileInputStream;
+		try {
+			propertiesFileInputStream = new FileInputStream(PROPERTIES_FILENAME);
+			try {
+				properties.load(propertiesFileInputStream);
+			} catch (IOException e) {
+				System.out.println("!!!ERROR!!! - IOException");
+				Configuration configuration = new Configuration();
+				configuration.createNewPropertiesFile(propertiesComment, true);
+			}
+		} catch (FileNotFoundException e) {
+			// conf.properties file not found, returns the default properties an create a
+			// new file
+			System.out.println("!!!ERROR!!! - FileNotFoundException");
+			Configuration configuration = new Configuration();
+			configuration.createNewPropertiesFile(propertiesComment, true);
+		}
+		return properties;
+	}
+
+	/**
+	 * The getPort method returns the port property and checks the value for
+	 * plausibility. If the check is negative, the default value is returned and
+	 * written to the property file.
+	 * 
+	 * @return property port
+	 */
+	public String getPort() {
+		Configuration configuration = new Configuration();
+		this.properties = configuration.readProperties();
+		this.port = this.properties.getProperty("port");
+		if (Integer.parseInt(this.port) < Integer.parseInt(PORT_MIN)
+				|| Integer.parseInt(this.port) > Integer.parseInt(PORT_MAX)) {
+			// property port out of range, port set to the default value
+			this.port = DEFAULT_PORT;
+			this.properties.setProperty("port", this.port);
+			configuration.createNewPropertiesFile("file with default property port create automatically", false              );
+		}
 		return this.port;
 	}
 
 	/**
-	 * The getPreferredI2cBus method returns number of the I2C Bus which is
-	 * accepted, if this is not specified in the URL, that is stored in the
-	 * configuration XML file.
+	 * The getPreferredI2cBus method returns the preferredI2cBus property and checks the value for
+	 * plausibility. If the check is negative, the default value is returned and
+	 * written to the property file.
 	 * 
-	 * @return the preferredI2cBus from the configuration xml-file
+	 * @return property preferredI2cBus
 	 */
-	public int getPreferredI2cBus() {
+	public String getPreferredI2cBus() {
 		Configuration configuration = new Configuration();
-		String[] configurationValues = configuration.readConfiguration();
-		this.preferredI2cBus = Integer.parseInt(configurationValues[1]);
+		this.properties = configuration.readProperties();
+		this.preferredI2cBus = this.properties.getProperty("preferredI2cBus");
+		if (Integer.parseInt(this.preferredI2cBus) < Integer.parseInt(PREFERRED_I2CBUS_MIN)
+				|| Integer.parseInt(this.preferredI2cBus) > Integer.parseInt(PREFERRED_I2CBUS_MAX)) {
+			// property preferredI2cBus out of range, preferredI2cBus set to the default value
+			this.preferredI2cBus = DEFAULT_PREFERRED_I2CBUS;
+			this.properties.setProperty("preferredI2cBus", this.preferredI2cBus);
+			configuration.createNewPropertiesFile("file with default property preferredI2cBus create automatically", false);
+		}
 		return this.preferredI2cBus;
 	}
 
 	/**
-	 * The getPreferredDelay method returns the time in milliseconds, which should
-	 * expire before a service is resumed, that is stored in the configuration XML
-	 * file.
+	 * The getPreferredDelay method returns the preferredDelay property and checks the value for
+	 * plausibility. If the check is negative, the default value is returned and
+	 * written to the property file.
 	 * 
-	 * @return the delay from the configuration xml-file
+	 * @return property preferredDelay
 	 */
-	public int getPreferredDelay() {
+	public String getPreferredDelay() {
 		Configuration configuration = new Configuration();
-		String[] configurationValues = configuration.readConfiguration();
-		this.preferredDelay = Integer.parseInt(configurationValues[2]);
+		this.properties = configuration.readProperties();
+		this.preferredDelay = this.properties.getProperty("preferredDelay");
+		if (Integer.parseInt(this.preferredDelay) < Integer.parseInt(PREFERRED_DELAY_MIN)
+				|| Integer.parseInt(this.preferredDelay) > Integer.parseInt(PREFERRED_DELAY_MAX)) {
+			// property preferredDelay out of range, preferredDelay set to the default value
+			this.preferredDelay = DEFAULT_PREFERRED_DELAY;
+			this.properties.setProperty("preferredDelay", this.preferredDelay);
+			configuration.createNewPropertiesFile("file with default property preferredDelay create automatically", false);
+		}
 		return this.preferredDelay;
 	}
 

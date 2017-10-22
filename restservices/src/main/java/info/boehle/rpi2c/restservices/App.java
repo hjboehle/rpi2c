@@ -8,15 +8,16 @@ import org.eclipse.jetty.servlet.ServletHolder;
  * Hello world!
  *
  */
-public class App 
-{
+public class App {
+	
 	public static void main(String[] args) {
 	
 	    ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         context.setContextPath("/");
 
-        Configuration configuration = new Configuration();
-        int port = configuration.getPort();
+        //Configuration configuration = new Configuration();
+        //int port = configuration.getPort();
+        int port = 2222;
         Server jettyServer = new Server(port);
         jettyServer.setHandler(context);
 
