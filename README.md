@@ -1,2 +1,2 @@
 # rpi2c
-RESTful Services for Raspberry Pi to access the I2C-Bus
+REST API for the I²C-Bus of the Raspberry Pi
